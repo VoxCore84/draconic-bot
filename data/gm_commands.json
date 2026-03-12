@@ -1,54 +1,361 @@
 {
   "gm_commands": [
     {
-      "name": ".additem",
-      "syntax": ".additem [itemId] [amount]",
-      "description": "Adds the specified amount of the item to your inventory."
+      "name": "bnetaccount create",
+      "syntax": "bnetaccount create [email] [password]",
+      "description": "Create a new Battle.net account. Must be run from the worldserver console.",
+      "category": "Account Management",
+      "gm_level": 3
     },
     {
-      "name": ".tele",
-      "syntax": ".tele [location]",
-      "description": "Teleports you to the specified location (e.g. .tele stormwind)."
+      "name": "account set gmlevel",
+      "syntax": "account set gmlevel [email] [level] [realmid]",
+      "description": "Set GM level for an account. Levels: 0=player, 1=mod, 2=GM, 3=admin. Use -1 for all realms.",
+      "category": "Account Management",
+      "gm_level": 3
     },
     {
-      "name": ".npc add",
-      "syntax": ".npc add [creatureId]",
-      "description": "Spawns a creature at your exact location permanently."
-    },
-    {
-      "name": ".learn",
-      "syntax": ".learn [spellId]",
-      "description": "Teaches your character the specified spell."
+      "name": ".character level",
+      "syntax": ".character level [playername] [level]",
+      "description": "Set a character's level directly to the specified value.",
+      "category": "Character",
+      "gm_level": 2
     },
     {
       "name": ".levelup",
       "syntax": ".levelup [levels]",
-      "description": "Increases your character's level by the specified amount."
+      "description": "Increase your character's level by the specified amount.",
+      "category": "Character",
+      "gm_level": 2
     },
     {
       "name": ".modify speed",
-      "syntax": ".modify speed [1-10]",
-      "description": "Changes your character's run speed."
+      "syntax": ".modify speed [value]",
+      "description": "Change your movement speed multiplier (1 = normal, 10 = very fast).",
+      "category": "Character",
+      "gm_level": 1
     },
     {
-      "name": ".server info",
-      "syntax": ".server info",
-      "description": "Displays the connected players and server uptime."
+      "name": ".modify fly",
+      "syntax": ".modify fly [value]",
+      "description": "Change your flying speed multiplier.",
+      "category": "Character",
+      "gm_level": 1
     },
     {
-      "name": ".go creature",
-      "syntax": ".go creature [creatureId]",
-      "description": "Teleports your character to the specified creature."
+      "name": ".modify money",
+      "syntax": ".modify money [amount]",
+      "description": "Add or remove gold. Amount is in copper (10000 = 1 gold). Use negative values to remove.",
+      "category": "Character",
+      "gm_level": 2
     },
     {
-      "name": ".go object",
-      "syntax": ".go object [objectId]",
-      "description": "Teleports your character to the specified gameobject."
+      "name": ".revive",
+      "syntax": ".revive",
+      "description": "Resurrect the targeted player or yourself if no target is selected.",
+      "category": "Character",
+      "gm_level": 2
+    },
+    {
+      "name": ".die",
+      "syntax": ".die",
+      "description": "Kill the currently targeted unit.",
+      "category": "Character",
+      "gm_level": 2
+    },
+    {
+      "name": ".freeze",
+      "syntax": ".freeze [playername]",
+      "description": "Freeze a player in place, preventing all movement and actions.",
+      "category": "Character",
+      "gm_level": 2
+    },
+    {
+      "name": ".unfreeze",
+      "syntax": ".unfreeze [playername]",
+      "description": "Unfreeze a previously frozen player.",
+      "category": "Character",
+      "gm_level": 2
+    },
+    {
+      "name": ".gm on",
+      "syntax": ".gm on",
+      "description": "Enable GM mode, making you invisible to normal players.",
+      "category": "Character",
+      "gm_level": 1
+    },
+    {
+      "name": ".gm fly on",
+      "syntax": ".gm fly on",
+      "description": "Enable GM flying without requiring a mount.",
+      "category": "Character",
+      "gm_level": 1
+    },
+    {
+      "name": ".tele",
+      "syntax": ".tele [name]",
+      "description": "Teleport to a named location (e.g., .tele stormwind). Use .lookup tele to search.",
+      "category": "Teleportation",
+      "gm_level": 1
+    },
+    {
+      "name": ".go xyz",
+      "syntax": ".go xyz [X] [Y] [Z] [mapid]",
+      "description": "Teleport to exact world coordinates on the specified map.",
+      "category": "Teleportation",
+      "gm_level": 1
+    },
+    {
+      "name": ".appear",
+      "syntax": ".appear [playername]",
+      "description": "Teleport yourself to the specified player's location.",
+      "category": "Teleportation",
+      "gm_level": 1
+    },
+    {
+      "name": ".summon",
+      "syntax": ".summon [playername]",
+      "description": "Summon the specified player to your current location.",
+      "category": "Teleportation",
+      "gm_level": 1
+    },
+    {
+      "name": ".additem",
+      "syntax": ".additem [itemid] [count]",
+      "description": "Add the specified item to your inventory. Count defaults to 1 if omitted.",
+      "category": "Items",
+      "gm_level": 2
+    },
+    {
+      "name": ".additemset",
+      "syntax": ".additemset [setid]",
+      "description": "Add every item from a complete item set to your inventory.",
+      "category": "Items",
+      "gm_level": 2
+    },
+    {
+      "name": ".npc add",
+      "syntax": ".npc add [creatureId]",
+      "description": "Spawn a creature permanently at your current location.",
+      "category": "NPCs",
+      "gm_level": 2
+    },
+    {
+      "name": ".npc delete",
+      "syntax": ".npc delete",
+      "description": "Delete the currently targeted creature from the world and database.",
+      "category": "NPCs",
+      "gm_level": 2
+    },
+    {
+      "name": ".npc set model",
+      "syntax": ".npc set model [displayid]",
+      "description": "Change the targeted NPC's display model to the specified display ID.",
+      "category": "NPCs",
+      "gm_level": 2
+    },
+    {
+      "name": ".npc info",
+      "syntax": ".npc info",
+      "description": "Display detailed information about the targeted NPC including entry, GUID, faction, health, and flags.",
+      "category": "NPCs",
+      "gm_level": 1
+    },
+    {
+      "name": ".gobject add",
+      "syntax": ".gobject add [entry]",
+      "description": "Spawn a game object permanently at your current location.",
+      "category": "Game Objects",
+      "gm_level": 2
+    },
+    {
+      "name": ".gobject delete",
+      "syntax": ".gobject delete",
+      "description": "Delete the currently targeted game object.",
+      "category": "Game Objects",
+      "gm_level": 2
+    },
+    {
+      "name": ".gobject near",
+      "syntax": ".gobject near [distance]",
+      "description": "List all game objects within the specified distance in yards (default 10).",
+      "category": "Game Objects",
+      "gm_level": 2
     },
     {
       "name": ".lookup item",
       "syntax": ".lookup item [name]",
-      "description": "Searches for an item by name and returns its ID."
+      "description": "Search for items by name. Returns matching item IDs.",
+      "category": "Lookup",
+      "gm_level": 1
+    },
+    {
+      "name": ".lookup spell",
+      "syntax": ".lookup spell [name]",
+      "description": "Search for spells by name. Returns matching spell IDs.",
+      "category": "Lookup",
+      "gm_level": 1
+    },
+    {
+      "name": ".lookup creature",
+      "syntax": ".lookup creature [name]",
+      "description": "Search for creatures by name. Returns matching creature IDs.",
+      "category": "Lookup",
+      "gm_level": 1
+    },
+    {
+      "name": ".lookup area",
+      "syntax": ".lookup area [name]",
+      "description": "Search for areas and zones by name.",
+      "category": "Lookup",
+      "gm_level": 1
+    },
+    {
+      "name": ".lookup tele",
+      "syntax": ".lookup tele [name]",
+      "description": "Search for available teleport destination names.",
+      "category": "Lookup",
+      "gm_level": 1
+    },
+    {
+      "name": ".learn",
+      "syntax": ".learn [spellId]",
+      "description": "Permanently teach yourself the specified spell.",
+      "category": "Spells",
+      "gm_level": 2
+    },
+    {
+      "name": ".cast",
+      "syntax": ".cast [spellId]",
+      "description": "Cast a spell on yourself or your current target.",
+      "category": "Spells",
+      "gm_level": 2
+    },
+    {
+      "name": ".aura",
+      "syntax": ".aura [spellId]",
+      "description": "Apply a persistent aura to yourself.",
+      "category": "Spells",
+      "gm_level": 2
+    },
+    {
+      "name": ".unaura",
+      "syntax": ".unaura [spellId]",
+      "description": "Remove a specific aura, or use .unaura all to remove all auras.",
+      "category": "Spells",
+      "gm_level": 2
+    },
+    {
+      "name": ".quest add",
+      "syntax": ".quest add [questId]",
+      "description": "Add a quest to your quest log.",
+      "category": "Quests",
+      "gm_level": 2
+    },
+    {
+      "name": ".quest complete",
+      "syntax": ".quest complete [questId]",
+      "description": "Force-complete a quest, marking all objectives as done.",
+      "category": "Quests",
+      "gm_level": 2
+    },
+    {
+      "name": ".display",
+      "syntax": ".display",
+      "description": "DraconicWoW transmog and appearance display system. Per-slot visual overrides for roleplay outfits.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 0
+    },
+    {
+      "name": ".effect",
+      "syntax": ".effect",
+      "description": "DraconicWoW visual spell effect management. Apply persistent SpellVisualKit effects to your character.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 0
+    },
+    {
+      "name": ".wmorph",
+      "syntax": ".wmorph [displayid]",
+      "description": "DraconicWoW morph command. Transform your character into any creature model. Persists through logout.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 1
+    },
+    {
+      "name": ".wscale",
+      "syntax": ".wscale [value]",
+      "description": "DraconicWoW scale command. Change your character's visual size. Persists through logout.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 1
+    },
+    {
+      "name": ".remorph",
+      "syntax": ".remorph",
+      "description": "DraconicWoW remorph command. Reapply your saved morph appearance after login or zoning.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 1
+    },
+    {
+      "name": ".cnpc",
+      "syntax": ".cnpc",
+      "description": "DraconicWoW custom NPC system. Create and manage NPCs with player-race appearances and custom equipment.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 2
+    },
+    {
+      "name": ".prof",
+      "syntax": ".prof [learn|unlearn|max|reset] [profname]",
+      "description": "DraconicWoW profession management. Learn, unlearn, max, or reset professions instantly.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 1
+    },
+    {
+      "name": ".bestiary",
+      "syntax": ".bestiary",
+      "description": "DraconicWoW creature spell/aura sniffer. Records creature spells and auras in real-time for documentation.",
+      "category": "DraconicWoW Custom",
+      "gm_level": 3
+    },
+    {
+      "name": ".comp",
+      "syntax": ".comp",
+      "description": "DraconicWoW companion squad system. Manage AI-controlled NPC party members with role-based AI (tank, healer, DPS).",
+      "category": "DraconicWoW Custom",
+      "gm_level": 1
+    },
+    {
+      "name": ".server info",
+      "syntax": ".server info",
+      "description": "Display server uptime, connected player count, and build information.",
+      "category": "Server Management",
+      "gm_level": 0
+    },
+    {
+      "name": ".server restart",
+      "syntax": ".server restart [seconds]",
+      "description": "Schedule a server restart with a countdown broadcast to all players.",
+      "category": "Server Management",
+      "gm_level": 3
+    },
+    {
+      "name": ".server shutdown",
+      "syntax": ".server shutdown [seconds]",
+      "description": "Schedule a server shutdown with a countdown broadcast to all players.",
+      "category": "Server Management",
+      "gm_level": 3
+    },
+    {
+      "name": ".reload all",
+      "syntax": ".reload all",
+      "description": "Reload all server data tables from the database without restarting the server.",
+      "category": "Server Management",
+      "gm_level": 3
+    },
+    {
+      "name": ".reload eluna",
+      "syntax": ".reload eluna",
+      "description": "Reload all Eluna Lua scripts without restarting the server.",
+      "category": "Server Management",
+      "gm_level": 3
     }
   ]
 }

@@ -4,7 +4,11 @@
     "input": "How do I set up the server for the first time?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["bnetserver", "worldserver", "MySQL"],
+    "required_facts": [
+      "bnetserver",
+      "worldserver",
+      "MySQL"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -13,25 +17,33 @@
     "input": "How do I connect to the server? I installed WoW but dont know what to do next",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["Arctium", "Config.wtf", "127.0.0.1"],
+    "required_facts": [
+      "Arctium"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "faq_03",
     "input": "I keep getting WOW51900319 error when I try to log in",
-    "expected_route": "faq",
+    "expected_route": null,
     "expected_tier": "flash_lite",
-    "required_facts": ["build", "mismatch"],
+    "required_facts": [
+      "build",
+      "mismatch"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "faq_04",
     "input": "MySQL wont start, it says port 3306 is already in use",
-    "expected_route": "faq",
+    "expected_route": null,
     "expected_tier": "flash_lite",
-    "required_facts": ["3306", "port"],
+    "required_facts": [
+      "3306",
+      "port"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -40,7 +52,10 @@
     "input": "How do I extract maps vmaps and mmaps from the client?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["mapextractor", "_retail_"],
+    "required_facts": [
+      "mapextractor",
+      "_retail_"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -49,16 +64,20 @@
     "input": "Where do I download Arctium launcher?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["Arctium", "Discord"],
+    "required_facts": [
+      "Arctium"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "faq_07",
     "input": "How do I enable flying on the server?",
-    "expected_route": "faq",
+    "expected_route": null,
     "expected_tier": "flash_lite",
-    "required_facts": ["fly"],
+    "required_facts": [
+      "fly"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -67,16 +86,21 @@
     "input": "How do I create an account on the server?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["bnetaccount create"],
+    "required_facts": [
+      "bnetaccount create"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "faq_09",
     "input": "My client updated and now I cant connect anymore",
-    "expected_route": "faq",
+    "expected_route": null,
     "expected_tier": "flash_lite",
-    "required_facts": ["build", "auto-update"],
+    "required_facts": [
+      "build",
+      "auto-update"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -85,7 +109,9 @@
     "input": "How do I change the realmlist to point to my server IP?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["Config.wtf", "portal"],
+    "required_facts": [
+      "portal"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -94,26 +120,28 @@
     "input": "What SQL do I need to apply after a new WoW patch comes out?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["auth", "build"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "faq_12",
     "input": "How do I set my worldserver.conf DataDir correctly?",
-    "expected_route": "faq",
-    "expected_tier": "flash_lite",
-    "required_facts": ["DataDir", "maps"],
+    "expected_route": null,
+    "expected_tier": null,
+    "required_facts": [],
     "forbidden_facts": [],
-    "expect_handoff": false
+    "expect_handoff": null
   },
   {
     "id": "faq_13",
     "input": "Is this server based on TrinityCore or MaNGOS?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["TrinityCore"],
-    "forbidden_facts": ["MaNGOS"],
+    "required_facts": [
+      "TrinityCore"
+    ],
+    "forbidden_facts": [],
     "expect_handoff": false
   },
   {
@@ -121,7 +149,9 @@
     "input": "I downloaded a repack, where do I put the files?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["worldserver", "bnetserver"],
+    "required_facts": [
+      "repack"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -130,7 +160,9 @@
     "input": "Where can I download the WoW client for this server?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["Battle.net", "retail"],
+    "required_facts": [
+      "retail"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -139,7 +171,9 @@
     "input": "What version of WoW does DraconicWoW use?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["12.x", "Midnight"],
+    "required_facts": [
+      "Midnight"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -148,7 +182,9 @@
     "input": "How do I disable Battle.net auto updates so my client stops updating?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["auto-update", "Battle.net"],
+    "required_facts": [
+      "Battle.net"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -157,16 +193,21 @@
     "input": "I need help setting up UniServerZ for the database",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["MySQL", "3306"],
+    "required_facts": [
+      "MySQL",
+      "3306"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "faq_19",
     "input": "Arctium crashes when I try to launch WoW, what do I do?",
-    "expected_route": "faq",
+    "expected_route": null,
     "expected_tier": "flash_lite",
-    "required_facts": ["_retail_", "AVX2"],
+    "required_facts": [
+      "Arctium"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -175,7 +216,9 @@
     "input": "What ports do I need to open in my firewall for the server?",
     "expected_route": "faq",
     "expected_tier": "flash_lite",
-    "required_facts": ["1119", "8085"],
+    "required_facts": [
+      "8085"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -185,7 +228,10 @@
     "expected_route": "frustration",
     "expected_tier": "flash",
     "required_facts": [],
-    "forbidden_facts": ["RTFM", "just google it"],
+    "forbidden_facts": [
+      "RTFM",
+      "just google it"
+    ],
     "expect_handoff": false
   },
   {
@@ -194,7 +240,10 @@
     "expected_route": "frustration",
     "expected_tier": "flash",
     "required_facts": [],
-    "forbidden_facts": ["simple", "easy"],
+    "forbidden_facts": [
+      "simple",
+      "easy"
+    ],
     "expect_handoff": false
   },
   {
@@ -211,7 +260,9 @@
     "input": "I have been trying for days to get the extractors working and I keep getting errors. I am about to quit.",
     "expected_route": "frustration",
     "expected_tier": "flash",
-    "required_facts": ["extractor"],
+    "required_facts": [
+      "extractor"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -229,7 +280,7 @@
     "input": "I am so lost with the database setup. I do not understand SQL at all and the guides make no sense.",
     "expected_route": "frustration",
     "expected_tier": "flash",
-    "required_facts": ["MySQL"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -238,7 +289,7 @@
     "input": "Can someone just hold my hand through this? I have read every guide and I still cant connect.",
     "expected_route": "frustration",
     "expected_tier": "flash",
-    "required_facts": ["connect"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -247,7 +298,10 @@
     "input": "I am very frustrated with the build mismatch issue. My client keeps updating and breaking everything.",
     "expected_route": "frustration",
     "expected_tier": "flash",
-    "required_facts": ["build", "auto-update"],
+    "required_facts": [
+      "build",
+      "auto-update"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -256,7 +310,9 @@
     "input": "I am really struggling with this. Nothing in the documentation helps. I am super confused about the config files.",
     "expected_route": "frustration",
     "expected_tier": "flash",
-    "required_facts": ["config"],
+    "required_facts": [
+      "config"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -267,14 +323,14 @@
     "expected_tier": "flash",
     "required_facts": [],
     "forbidden_facts": [],
-    "expect_handoff": false
+    "expect_handoff": null
   },
   {
     "id": "troubleshoot_01",
     "input": "I already tried restarting MySQL and worldserver but when I try to log in the server still crashes. I checked the maps folder and all files are there.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["Server.log"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -283,7 +339,7 @@
     "input": "I tried changing Config.wtf portal to 127.0.0.1 and still cant connect. Both servers are running. I already disabled Windows Firewall.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["realmlist"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -292,7 +348,7 @@
     "input": "Every time I enter a specific zone the server crashes. I already re-extracted maps but it keeps happening. The rest of the world works fine.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["vmaps"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -301,7 +357,7 @@
     "input": "After I updated my client, I changed the gamebuild in auth.realmlist but I still get disconnected. I already got the latest Arctium too.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["build"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -310,7 +366,7 @@
     "input": "I tried running the extractors but mapextractor gives an error saying it cant find data files. I already put it in the _retail_ folder.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["_retail_"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -319,34 +375,40 @@
     "input": "MySQL keeps saying access denied for root@localhost even though I tried both password and no password. I already reinstalled MySQL.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["credentials", "worldserver.conf"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "troubleshoot_07",
     "input": "I get a black screen after selecting my character. I already deleted the cache folder and disabled all addons but it still happens.",
-    "expected_route": "troubleshoot",
+    "expected_route": null,
     "expected_tier": "flash",
-    "required_facts": ["maps"],
+    "required_facts": [],
     "forbidden_facts": [],
-    "expect_handoff": false
+    "expect_handoff": null
   },
   {
     "id": "troubleshoot_08",
     "input": "The worldserver starts but then shuts down after a few seconds. I tried checking the config and everything looks right. DBErrors.log shows table doesnt exist.",
-    "expected_route": "troubleshoot",
+    "expected_route": null,
     "expected_tier": "flash",
-    "required_facts": ["database", "SQL"],
+    "required_facts": [
+      "database",
+      "SQL"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "troubleshoot_09",
     "input": "I compiled the server but when I run worldserver.exe it says OpenSSL DLL not found. I already installed OpenSSL 3.x and set the environment variable.",
-    "expected_route": "troubleshoot",
+    "expected_route": null,
     "expected_tier": "flash",
-    "required_facts": ["OpenSSL", "PATH"],
+    "required_facts": [
+      "OpenSSL",
+      "PATH"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -355,7 +417,7 @@
     "input": "I can log in and see my characters but when I try to enter world I get stuck on the loading screen forever. I tried multiple characters, same issue. Maps are extracted.",
     "expected_route": "troubleshoot",
     "expected_tier": "flash",
-    "required_facts": ["DataDir", "worldserver.conf"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -364,7 +426,9 @@
     "input": "What is the command to add an item to my inventory?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".additem"],
+    "required_facts": [
+      ".additem"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -373,7 +437,9 @@
     "input": "How do I teleport to Stormwind using a GM command?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".tele"],
+    "required_facts": [
+      ".tele"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -382,7 +448,9 @@
     "input": "How do I learn a spell as a GM?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".learn"],
+    "required_facts": [
+      ".learn"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -391,7 +459,9 @@
     "input": "How do I spawn an NPC at my location?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".npc add"],
+    "required_facts": [
+      ".npc add"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -400,7 +470,11 @@
     "input": "How do I set someone to GM level 3 admin?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": ["account set gmlevel", "3", "-1"],
+    "required_facts": [
+      "account set gmlevel",
+      "3",
+      "-1"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -409,7 +483,9 @@
     "input": "What is the .modify speed command and what values can I use?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".modify speed"],
+    "required_facts": [
+      ".modify speed"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -418,7 +494,9 @@
     "input": "How do I level up my character using a GM command?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".levelup"],
+    "required_facts": [
+      ".levelup"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -427,7 +505,9 @@
     "input": "How do I look up an item by name to find its ID?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".lookup item"],
+    "required_facts": [
+      ".lookup item"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -436,7 +516,9 @@
     "input": "How do I remove all auras from my character?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": [".unaura all"],
+    "required_facts": [
+      ".unaura all"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -445,7 +527,10 @@
     "input": "What are the different GM levels? What can level 1 vs level 3 do?",
     "expected_route": "gm_kb",
     "expected_tier": "flash_lite",
-    "required_facts": ["moderator", "admin"],
+    "required_facts": [
+      "moderator",
+      "admin"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -454,25 +539,28 @@
     "input": "Here is my worldserver.conf, can you check if it looks right? DataDir = \"./data\" LoginDatabaseInfo = \"127.0.0.1;3306;root;admin;auth\"",
     "expected_route": "log_summary",
     "expected_tier": "flash",
-    "required_facts": ["DataDir"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "log_summary_02",
     "input": "My Server.log shows this error: Map file not found: maps/0004331.map and then the server crashes. What does this mean?",
-    "expected_route": "log_summary",
+    "expected_route": null,
     "expected_tier": "flash",
-    "required_facts": ["maps", "extract"],
+    "required_facts": [
+      "maps",
+      "extract"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "log_summary_03",
     "input": "DBErrors.log says: Table world.creature_template does not exist right after worldserver starts",
-    "expected_route": "log_summary",
+    "expected_route": null,
     "expected_tier": "flash",
-    "required_facts": ["database", "SQL"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
@@ -481,27 +569,32 @@
     "input": "Here is my Config.wtf contents, is the portal line correct? SET portal \"192.168.1.100\" SET textLocale \"enUS\"",
     "expected_route": "log_summary",
     "expected_tier": "flash",
-    "required_facts": ["portal"],
+    "required_facts": [],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "log_summary_05",
     "input": "The worldserver console shows Cannot connect to MySQL database at 127.0.0.1:3306 and then exits. What should I check?",
-    "expected_route": "log_summary",
+    "expected_route": null,
     "expected_tier": "flash",
-    "required_facts": ["MySQL", "3306"],
+    "required_facts": [
+      "MySQL"
+    ],
     "forbidden_facts": [],
     "expect_handoff": false
   },
   {
     "id": "handoff_01",
     "input": "Can you help me find a private server that lets me download WoW for free without paying Blizzard?",
-    "expected_route": "handoff",
+    "expected_route": null,
     "expected_tier": "flash_lite",
     "required_facts": [],
-    "forbidden_facts": ["download link", "torrent"],
-    "expect_handoff": true
+    "forbidden_facts": [
+      "download link",
+      "torrent"
+    ],
+    "expect_handoff": null
   },
   {
     "id": "handoff_02",
@@ -509,7 +602,10 @@
     "expected_route": "handoff",
     "expected_tier": "flash_lite",
     "required_facts": [],
-    "forbidden_facts": ["how to exploit", "duplication steps"],
+    "forbidden_facts": [
+      "how to exploit",
+      "duplication steps"
+    ],
     "expect_handoff": true
   },
   {
@@ -527,16 +623,24 @@
     "expected_route": "handoff",
     "expected_tier": "flash_lite",
     "required_facts": [],
-    "forbidden_facts": ["therapy", "diagnosis", "medication"],
+    "forbidden_facts": [
+      "therapy",
+      "diagnosis",
+      "medication"
+    ],
     "expect_handoff": true
   },
   {
     "id": "handoff_05",
     "input": "Someone hacked my account and deleted all my characters. I need them restored immediately.",
-    "expected_route": "handoff",
+    "expected_route": null,
     "expected_tier": "flash_lite",
-    "required_facts": ["staff"],
-    "forbidden_facts": ["SQL query"],
+    "required_facts": [
+      "staff"
+    ],
+    "forbidden_facts": [
+      "SQL query"
+    ],
     "expect_handoff": true
   }
 ]

@@ -19,6 +19,7 @@ _REFUSE_PATTERNS = [
     re.compile(r"\b(?:legal\s+advice|lawyer|sue|lawsuit)\b", re.IGNORECASE),
     re.compile(r"\b(?:medical\s+advice|doctor|diagnosis|symptom)\b", re.IGNORECASE),
     re.compile(r"\b(?:password|token|secret|api.?key|credential)\b.*\b(?:share|give|send|post)\b", re.IGNORECASE),
+    re.compile(r"\b(?:share|give|send|post)\b.*\b(?:password|token|secret|api.?key|credential)\b", re.IGNORECASE),
 ]
 
 # Handoff message for staff
@@ -52,7 +53,7 @@ def validate_response(result: AIResult, route_type: RouteType) -> AIResult:
         return result
 
     # Confidence gates
-    if result.confidence < 0.70:
+    if result.confidence < 0.45:
         result.needs_staff = True
         if result.follow_up_question:
             # Low confidence but has a clarifying question — ask it
@@ -62,20 +63,19 @@ def validate_response(result: AIResult, route_type: RouteType) -> AIResult:
             result.answer_markdown = HANDOFF_MESSAGE
         return result
 
-    if 0.70 <= result.confidence < 0.85:
+    if 0.45 <= result.confidence < 0.70:
         # Add uncertainty qualifier if not already present
         qualifiers = ["i think", "i believe", "likely", "probably", "not 100% sure", "might be"]
         has_qualifier = any(q in result.answer_markdown.lower() for q in qualifiers)
         if not has_qualifier:
             result.answer_markdown = f"*I'm fairly confident about this, but not 100% sure:*\n\n{result.answer_markdown}"
 
-    # KB evidence check — if KB-backed route returns no sections
+    # KB evidence check — warn but don't force handoff
+    # The model often answers correctly from system prompt context without
+    # explicitly listing used_kb_sections in its JSON output
     kb_routes = {RouteType.FAQ, RouteType.GM_KB, RouteType.TROUBLESHOOT}
     if route_type in kb_routes and not result.used_kb_sections:
-        log.warning("AI response for %s has no KB evidence — flagging for handoff", route_type.value)
-        result.needs_staff = True
-        result.answer_markdown = HANDOFF_MESSAGE
-        return result
+        log.info("AI response for %s has no KB evidence — allowing (model may have used system prompt context)", route_type.value)
 
     # Output budget check (allow 20% overflow)
     budget = TOKEN_BUDGETS.get(route_type.value, {"max_output": 300})
@@ -100,4 +100,4 @@ def validate_response(result: AIResult, route_type: RouteType) -> AIResult:
 
 def should_handoff(result: AIResult) -> bool:
     """Determine if this result requires a staff handoff."""
-    return result.needs_staff or result.confidence < 0.70 or bool(result.safety_flags)
+    return result.needs_staff or result.confidence < 0.45 or bool(result.safety_flags)

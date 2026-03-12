@@ -15,6 +15,65 @@ log = logging.getLogger(__name__)
 _MANIFEST_PATH = AI_KB_DIR / "kb_manifest.json"
 
 
+def _split_by_headings(content: str, file_key: str, file_tags: list[str]) -> list[KBSnippet]:
+    """Split a markdown file into sections by ## headings.
+
+    Each section inherits the file-level tags plus words from its heading.
+    If the file has no ## headings, return the whole file as one section.
+    """
+    # Find all ## headings and their positions
+    heading_pattern = re.compile(r"^##\s+(.+)", re.MULTILINE)
+    matches = list(heading_pattern.finditer(content))
+
+    if not matches:
+        # No ## headings — return the whole file as one section
+        title_match = re.match(r"^#\s+(.+)", content)
+        title = title_match.group(1) if title_match else file_key
+        return [KBSnippet(
+            file_key=file_key,
+            title=title,
+            content=content,
+            tags=list(file_tags),
+        )]
+
+    sections = []
+
+    # Get the preamble (text before first ##) as a section if substantial
+    preamble = content[:matches[0].start()].strip()
+    if len(preamble) > 100:
+        title_match = re.match(r"^#\s+(.+)", preamble)
+        title = title_match.group(1) if title_match else file_key
+        sections.append(KBSnippet(
+            file_key=f"{file_key}/intro",
+            title=title,
+            content=preamble,
+            tags=list(file_tags),
+        ))
+
+    # Split by ## headings
+    for i, match in enumerate(matches):
+        heading_title = match.group(1).strip()
+        start = match.start()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(content)
+        section_content = content[start:end].strip()
+
+        if len(section_content) < 30:
+            continue
+
+        # Extract keywords from heading as additional tags
+        heading_words = re.findall(r"[a-zA-Z0-9_.-]+", heading_title.lower())
+        section_tags = list(set(file_tags + heading_words))
+
+        sections.append(KBSnippet(
+            file_key=f"{file_key}/{heading_title[:40]}",
+            title=heading_title,
+            content=section_content,
+            tags=section_tags,
+        ))
+
+    return sections
+
+
 class KnowledgeBase:
     """Local file-based knowledge retrieval by tag/keyword matching."""
 
@@ -24,7 +83,7 @@ class KnowledgeBase:
         self.load()
 
     def load(self):
-        """Load all knowledge files and manifest."""
+        """Load all knowledge files and manifest, splitting by headings."""
         self._sections = []
         self._manifest = {}
 
@@ -40,7 +99,7 @@ class KnowledgeBase:
             return
 
         for md_file in sorted(AI_KB_DIR.glob("*.md")):
-            file_key = md_file.stem  # e.g. "30_setup_and_connection"
+            file_key = md_file.stem
             meta = self._manifest.get(file_key, {})
             tags = meta.get("tags", [])
 
@@ -50,26 +109,19 @@ class KnowledgeBase:
                 log.exception("Failed to read KB file: %s", md_file)
                 continue
 
-            # Extract title from first heading
-            title_match = re.match(r"^#\s+(.+)", content)
-            title = title_match.group(1) if title_match else file_key
-
             # Also extract inline tags if present
             tag_match = re.search(r"^Tags:\s*(.+)", content, re.MULTILINE)
             if tag_match:
                 inline_tags = [t.strip().lower() for t in tag_match.group(1).split(",")]
                 tags = list(set(tags + inline_tags))
 
-            self._sections.append(KBSnippet(
-                file_key=file_key,
-                title=title,
-                content=content,
-                tags=tags,
-            ))
+            # Split into heading-based sections
+            sections = _split_by_headings(content, file_key, tags)
+            self._sections.extend(sections)
 
         log.info("Loaded %d KB sections from %s", len(self._sections), AI_KB_DIR)
 
-    def select_snippets(self, keywords: list[str], max_snippets: int = 4, max_tokens: int = 3000) -> list[KBSnippet]:
+    def select_snippets(self, keywords: list[str], max_snippets: int = 6, max_tokens: int = 3000) -> list[KBSnippet]:
         """Select the most relevant KB snippets for the given keywords.
 
         Uses simple lexical matching: score each section by how many keywords
@@ -99,12 +151,12 @@ class KnowledgeBase:
         # Sort by score descending
         scored.sort(key=lambda x: x[0], reverse=True)
 
-        # Select top snippets within token budget (rough: 1 token ≈ 4 chars)
+        # Select top snippets within token budget (rough: 1 token ~ 4 chars)
         selected = []
         total_chars = 0
         char_limit = max_tokens * 4
 
-        for _, section in scored[:max_snippets * 2]:  # check more than needed
+        for _, section in scored[:max_snippets * 3]:
             if len(selected) >= max_snippets:
                 break
             section_chars = len(section.content)
@@ -120,7 +172,6 @@ class KnowledgeBase:
 
     def extract_keywords(self, text: str) -> list[str]:
         """Extract likely keywords from a user message for KB matching."""
-        # Remove common stop words and short words
         stop_words = {
             "the", "a", "an", "is", "are", "was", "were", "be", "been", "being",
             "have", "has", "had", "do", "does", "did", "will", "would", "could",
@@ -146,4 +197,4 @@ class KnowledgeBase:
                 seen.add(kw)
                 result.append(kw)
 
-        return result[:15]  # cap at 15 keywords
+        return result[:15]

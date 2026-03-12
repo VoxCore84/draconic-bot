@@ -6,10 +6,13 @@
     "tags": ["server", "trinitycore", "private", "midnight", "12.x", "client", "wow"]
   },
   "20_client_builds": {
-    "tags": ["client", "build", "version", "mismatch", "update", "arctium", "battle.net", "auto-update", "WOW51900319"]
+    "tags": ["client", "build", "version", "mismatch", "update", "arctium", "battle.net", "auto-update", "WOW51900319", "66263", "launcher"]
+  },
+  "25_arctium_guide": {
+    "tags": ["arctium", "launcher", "connection", "custom-server", "ban", "eidolon", "troubleshoot", "crash", "version", "build"]
   },
   "30_setup_and_connection": {
-    "tags": ["setup", "connect", "login", "realmlist", "config", "port", "bnetserver", "worldserver", "127.0.0.1", "Config.wtf", "account", "arctium", "install"]
+    "tags": ["setup", "connect", "login", "realmlist", "config", "port", "bnetserver", "worldserver", "127.0.0.1", "Config.wtf", "account", "arctium", "install", "repack", "UniServerZ", "port-forward", "firewall", "remote", "extractors"]
   },
   "40_common_failures": {
     "tags": ["crash", "error", "disconnect", "dc", "mysql", "database", "maps", "extractors", "antivirus", "openssl", "port", "WOW51900319", "black screen", "loading"]

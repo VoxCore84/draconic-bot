@@ -72,11 +72,12 @@ AI_RATE_FRUSTRATION_USER = 1800     # 30 min per user
 AI_RATE_PRO_HOURLY_MAX = 5          # pro escalations per hour
 
 # --- Token budgets per route ---
+# Note: JSON response wrapper adds ~100-150 tokens overhead on top of answer content
 TOKEN_BUDGETS = {
-    "faq":           {"max_input": 2500, "max_output": 220},
-    "gm_kb":         {"max_input": 2500, "max_output": 220},
-    "frustration":   {"max_input": 2500, "max_output": 250},
-    "troubleshoot":  {"max_input": 4000, "max_output": 380},
-    "log_summary":   {"max_input": 5000, "max_output": 450},
-    "pro_escalation": {"max_input": 8000, "max_output": 500},
+    "faq":           {"max_input": 6000, "max_output": 600},
+    "gm_kb":         {"max_input": 6000, "max_output": 600},
+    "frustration":   {"max_input": 6000, "max_output": 700},
+    "troubleshoot":  {"max_input": 8000, "max_output": 800},
+    "log_summary":   {"max_input": 8000, "max_output": 800},
+    "pro_escalation": {"max_input": 10000, "max_output": 1000},
 }

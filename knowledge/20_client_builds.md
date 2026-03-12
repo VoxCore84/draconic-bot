@@ -1,32 +1,38 @@
-# Client Build Versions and Mismatches
-Tags: client, build, version, mismatch, update, arctium, battle.net, auto-update, WOW51900319
+# Client Build -- DraconicWoW Requires Build 66263
+Tags: client, build, version, mismatch, update, arctium, battle.net, auto-update, WOW51900319, 66263
 Last reviewed: 2026-03-12
 Owner: DraconicWoW Staff
 
 ## Facts
-- Blizzard automatically updates the retail WoW client whenever a new patch or hotfix is released.
-- The server expects a specific client build number. If the client build does not match the server build, the player is instantly disconnected.
-- The most common error code for a build mismatch is WOW51900319 -- this is the generic "disconnected from server" error.
-- The server's expected build number is shown in the worldserver console output at startup.
-- The client's current build number is displayed on the login screen in the bottom-left corner.
-- Arctium Launcher must also be compatible with the current client build -- outdated Arctium versions will fail to launch or crash.
+- DraconicWoW requires WoW client build **66263** (12.x / The War Within / Midnight era). No other build will work.
+- Players MUST use the **Arctium WoW Launcher** to connect. The standard Battle.net launcher will NOT connect to DraconicWoW.
+- Arctium Launcher redirects the WoW client to connect to the DraconicWoW private server instead of Blizzard's official servers. Without it, the client will attempt to log in to Blizzard and fail.
+- Players should **never let their WoW client auto-update** through Battle.net. Blizzard pushes patches that change the build number, which will break compatibility with DraconicWoW.
+- The client's current build number is displayed on the WoW login screen in the **bottom-left corner** (e.g., "Version 12.0.1.66263").
+- The server's expected build number is printed in the worldserver console at startup.
+- If the client and server builds do not match, the player is instantly disconnected with no useful error message from the game.
+- The most common error code for a build mismatch is **WOW51900319** -- this is a generic "disconnected from server" error that almost always means the builds don't match.
 
 ## Common symptoms
-- Instant disconnect upon entering credentials or reaching the character screen.
-- Error code WOW51900319 appearing repeatedly.
-- "The client and server builds don't match" or similar message in server logs.
-- Client worked yesterday but fails today (Blizzard pushed an update overnight).
+- Instant disconnect when entering credentials or reaching the character screen.
+- Error code **WOW51900319** appearing repeatedly, especially right after logging in.
+- Client worked yesterday but fails today -- Blizzard silently pushed a patch overnight and the client auto-updated past build 66263.
+- "Connecting..." hangs briefly then disconnects -- client build is too new or too old for the server.
+
+## How to check your build
+1. Open WoW using the Arctium Launcher (or even the normal launcher -- you just need to reach the login screen).
+2. Look at the **bottom-left corner** of the login screen.
+3. You should see something like **"Version 12.0.1.66263"**. The number after the last dot is the build number.
+4. If it says 66263, your client is correct. If it says a higher number (e.g., 66337, 66500, etc.), your client has been updated past the supported build.
 
 ## Fix steps
-1. Check the server build number in the worldserver console (printed at startup, e.g., "Client build: 66263").
-2. Check the client build number on the WoW login screen (bottom-left corner).
-3. If they do not match, the server operator needs to update the realmlist table in the auth database to accept the new build number. The SQL is: UPDATE realmlist SET gamebuild = <new_build> WHERE id = 1;
-4. The server may also need a recompile if the new client build introduces protocol changes.
-5. Download the latest Arctium Launcher from the Arctium Discord server. Old versions break with new builds.
-6. To prevent unwanted client updates, disable auto-updates in the Battle.net launcher: Settings > Game Install/Update > uncheck automatic updates for WoW.
-7. If the client already updated past the server's supported build, the player must wait for the server to catch up or find a way to roll back the client (difficult and unsupported).
+1. **Check your build first.** Look at the login screen bottom-left. If it says 66263, your client is fine -- the problem is something else (see setup guide or common failures).
+2. **If your build is wrong (too high):** Your WoW client has been updated past the server's supported version. You need to obtain the correct 66263 build client files. Ask in the DraconicWoW Discord for help getting the right version.
+3. **Prevent future auto-updates:** Do NOT open the Battle.net launcher with WoW installed, or if you do, disable auto-updates: Battle.net Settings > Game Install/Update > uncheck automatic updates for WoW. Better yet, keep a separate WoW installation folder for DraconicWoW that Battle.net doesn't know about.
+4. **Update Arctium Launcher:** The Arctium Launcher must also match the client build. If you have the right client build but Arctium crashes or fails to launch, download the latest Arctium version from the Arctium Discord that supports build 66263.
+5. **For repack operators:** If you updated the server to support a new build, update the `realmlist` table in the auth database: `UPDATE realmlist SET gamebuild = 66263 WHERE id = 1;`
 
 ## Escalate when
-- The server operator needs to bump the server build (requires SQL update, possibly a recompile).
-- The user reports that build numbers match but they still get WOW51900319 (could be a network or Arctium issue instead).
-- A new WoW patch dropped and the server has not been updated yet.
+- The player has confirmed build 66263 but still gets WOW51900319 (likely a network, firewall, or Arctium issue instead of a build mismatch).
+- A new WoW patch dropped and the community is asking when the server will update.
+- The player cannot find or obtain the 66263 client files.

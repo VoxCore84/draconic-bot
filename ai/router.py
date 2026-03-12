@@ -53,11 +53,13 @@ _SETUP_KEYWORDS = re.compile(
 )
 
 _FRUSTRATION_PATTERN = re.compile(
-    r"(?:i.?m so|i.?m really|very|super)\s*(?:confused|frustrated|lost|giving up|give up|about to quit)|"
-    r"(?:this is|it.?s)\s*(?:too hard|too difficult|impossible|make no sense)|"
-    r"(?:i don.?t|i cannot|i can.?t)\s*(?:understand|figure this out|get this to work)|"
+    r"(?:i.?m so|i am so|i.?m really|i am really|very|super)\s*(?:confused|frustrated|lost|giving up|give up|about to quit)|"
+    r"(?:this is|it.?s)\s+(?:\w+\s+)*(?:too hard|too difficult|impossible|make no sense)|"
+    r"(?:i don.?t|i do not|i cannot|i can.?t)\s*(?:understand|figure this out|get this to work)|"
     r"i.?ve been trying for (?:hours|days|a long time)|"
-    r"can someone (?:just )?(?:please )?(?:help|explain|hold my hand)",
+    r"i have been trying for (?:hours|days|a long time)|"
+    r"can someone (?:just |please )*(?:help|explain|tell me|hold my hand)|"
+    r"losing my mind|i can.?t take this|about to (?:quit|give up|throw)",
     re.IGNORECASE,
 )
 
@@ -87,10 +89,33 @@ def _detect_route_type(content: str) -> RouteType:
 
     # GM command questions
     gm_keywords = [".additem", ".tele", ".learn", ".npc", ".lookup", ".modify",
-                    ".go creature", ".go object", ".levelup", ".cast", "gm command",
-                    "game master", "admin command"]
+                    ".go creature", ".go object", ".levelup", ".cast", ".display",
+                    ".effect", ".wmorph", ".wscale", ".comp", ".bestiary", ".prof",
+                    ".unaura", ".aura",
+                    "gm command", "game master", "admin command", "gm level",
+                    "spawn npc", "spawn creature", "spawn an npc",
+                    "teleport", "give item", "add item", "add an item",
+                    "give myself", "change speed", "level up", "level my",
+                    "add gold", "become invisible", "npc info",
+                    "look up spell", "look up item", "look up an item",
+                    "lookup spell", "lookup item",
+                    "transmog command", "morph command",
+                    "learn a spell", "learn spell",
+                    "remove aura", "remove all aura",
+                    "as a gm", "as gm", "as admin"]
     if any(kw in content_lower for kw in gm_keywords):
         return RouteType.GM_KB
+
+    # Log/config paste analysis
+    log_signals = ["server.log", "dberrors.log", "debug.log", "here is my",
+                   "config.wtf", "worldserver.conf", "console shows",
+                   "error:", "does not exist", "map file not found",
+                   "cannot connect", "set portal", "datadir",
+                   "here is my", "can you check", "is this correct",
+                   "shows this error", "shows this message"]
+    log_count = sum(1 for s in log_signals if s in content_lower)
+    if log_count >= 2:
+        return RouteType.LOG_SUMMARY
 
     # Troubleshooting (more complex, multi-step issues)
     troubleshoot_signals = ["tried", "already", "still ", "nothing work", "doesn't work",
@@ -290,9 +315,20 @@ class AIRouter:
         text: str,
     ) -> AIResult:
         """Admin-only test endpoint — bypasses rate limits and channel checks."""
+        # Content boundary check (same as handle_message)
+        boundary_flag = check_content_boundaries(text)
+        if boundary_flag:
+            return AIResult(
+                route=RouteType.HANDOFF,
+                confidence=0.0,
+                needs_staff=True,
+                answer_markdown="I can't help with that topic. If you have a server setup or gameplay question, I'm happy to assist!",
+                safety_flags=[boundary_flag],
+            )
+
         model_tier = _select_model_tier(route_type)
         keywords = self.kb.extract_keywords(text)
-        budget = TOKEN_BUDGETS.get(route_type.value, {"max_input": 2500, "max_output": 220})
+        budget = TOKEN_BUDGETS.get(route_type.value, {"max_input": 2500, "max_output": 400})
         kb_snippets = self.kb.select_snippets(keywords, max_tokens=budget["max_input"] // 2)
 
         system_prompt = build_system_prompt(
