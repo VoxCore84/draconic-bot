@@ -1,0 +1,54 @@
+{
+  "gm_commands": [
+    {
+      "name": ".additem",
+      "syntax": ".additem [itemId] [amount]",
+      "description": "Adds the specified amount of the item to your inventory."
+    },
+    {
+      "name": ".tele",
+      "syntax": ".tele [location]",
+      "description": "Teleports you to the specified location (e.g. .tele stormwind)."
+    },
+    {
+      "name": ".npc add",
+      "syntax": ".npc add [creatureId]",
+      "description": "Spawns a creature at your exact location permanently."
+    },
+    {
+      "name": ".learn",
+      "syntax": ".learn [spellId]",
+      "description": "Teaches your character the specified spell."
+    },
+    {
+      "name": ".levelup",
+      "syntax": ".levelup [levels]",
+      "description": "Increases your character's level by the specified amount."
+    },
+    {
+      "name": ".modify speed",
+      "syntax": ".modify speed [1-10]",
+      "description": "Changes your character's run speed."
+    },
+    {
+      "name": ".server info",
+      "syntax": ".server info",
+      "description": "Displays the connected players and server uptime."
+    },
+    {
+      "name": ".go creature",
+      "syntax": ".go creature [creatureId]",
+      "description": "Teleports your character to the specified creature."
+    },
+    {
+      "name": ".go object",
+      "syntax": ".go object [objectId]",
+      "description": "Teleports your character to the specified gameobject."
+    },
+    {
+      "name": ".lookup item",
+      "syntax": ".lookup item [name]",
+      "description": "Searches for an item by name and returns its ID."
+    }
+  ]
+}

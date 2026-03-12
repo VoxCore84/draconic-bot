@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+logs/
+data/faq_stats.json
+data/.last_known_build
+data/.last_known_commit
+*.egg-info/
+dist/
+build/
