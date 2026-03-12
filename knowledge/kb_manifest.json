@@ -1,0 +1,26 @@
+{
+  "00_bot_identity": {
+    "tags": ["bot", "draconicbot", "help", "commands"]
+  },
+  "10_server_basics": {
+    "tags": ["server", "trinitycore", "private", "midnight", "12.x", "client", "wow"]
+  },
+  "20_client_builds": {
+    "tags": ["client", "build", "version", "mismatch", "update", "arctium", "battle.net", "auto-update", "WOW51900319"]
+  },
+  "30_setup_and_connection": {
+    "tags": ["setup", "connect", "login", "realmlist", "config", "port", "bnetserver", "worldserver", "127.0.0.1", "Config.wtf", "account", "arctium", "install"]
+  },
+  "40_common_failures": {
+    "tags": ["crash", "error", "disconnect", "dc", "mysql", "database", "maps", "extractors", "antivirus", "openssl", "port", "WOW51900319", "black screen", "loading"]
+  },
+  "50_custom_features": {
+    "tags": ["transmog", "companion", "roleplay", "custom", "npc", "visual", "effect", "morph", "outfit", "profession"]
+  },
+  "60_gm_commands": {
+    "tags": ["gm", "admin", "command", "additem", "tele", "learn", "npc", "spawn", "levelup", "modify", "lookup", "cast", "server"]
+  },
+  "70_staff_handoff_rules": {
+    "tags": ["staff", "handoff", "escalate", "help", "support"]
+  }
+}

@@ -1,18 +1,21 @@
-"""Guided troubleshooter — interactive button-driven flows for DraconicWoW issues."""
+"""Guided troubleshooter — interactive button-driven flows + AI-backed freeform diagnosis.
+
+v3: Adds an AI-powered freeform troubleshooting option alongside the existing decision tree.
+When AI is enabled, users can describe their problem in natural language and get contextual help.
+The static decision tree remains available as the primary structured path.
+"""
 
 import discord
 from discord import app_commands
 from discord.ext import commands
 from emojis import em
+from ai.schemas import RouteType
 
 
 # ── Decision tree structure ─────────────────────────────────────────
 # Each node: {prompt, options: [{label, emoji, next_node | answer}]}
-# If "answer" is present, that's a leaf node with the final response.
-# If "next_node" is present, drill deeper.
 
 TREES = {
-    # ── Connection Issues ──────────────────────────────────────────
     "cant_connect": {
         "prompt": "What happens when you try to connect?",
         "options": [
@@ -31,8 +34,8 @@ TREES = {
                     "still expects the old build.\n\n"
                     "**Fix:**\n"
                     "1. Use `/buildcheck` to see the latest required build number\n"
-                    "2. Go to the TrinityCore GitHub → `sql/updates/auth/master/`\n"
-                    "3. Download the newest `.sql` file — it updates `build_info` and auth keys\n"
+                    "2. Go to the TrinityCore GitHub \u2192 `sql/updates/auth/master/`\n"
+                    "3. Download the newest `.sql` file \u2014 it updates `build_info` and auth keys\n"
                     "4. Run it against your **auth** database (HeidiSQL, MySQL CLI, etc.)\n"
                     "5. Restart **bnetserver** and **worldserver**\n"
                     "6. If Arctium also complains, grab the latest Arctium build from their Discord"
@@ -42,14 +45,14 @@ TREES = {
                 "label": "Stuck at loading screen",
                 "emoji": "\u23f3",
                 "answer": (
-                    "**Stuck at Loading Screen — Usually a map data problem.**\n\n"
+                    "**Stuck at Loading Screen \u2014 Usually a map data problem.**\n\n"
                     "Your server can't find the map/vmap/mmap files it needs for the zone "
                     "you're loading into.\n\n"
                     "**Fix:**\n"
                     "1. Make sure you've extracted all 4 data sets (in order):\n"
-                    "   `mapextractor` → `vmapextractor` → `vmap4assembler` → `mmaps_generator`\n"
+                    "   `mapextractor` \u2192 `vmapextractor` \u2192 `vmap4assembler` \u2192 `mmaps_generator`\n"
                     "2. The output folders (`maps/`, `vmaps/`, `mmaps/`) must be in your server directory\n"
-                    "3. Check `worldserver.conf` — `DataDir` must point to the folder containing those\n"
+                    "3. Check `worldserver.conf` \u2014 `DataDir` must point to the folder containing those\n"
                     "4. If you recently updated your WoW client, you need to **re-extract everything**\n"
                     "5. Restart worldserver after fixing"
                 ),
@@ -62,14 +65,12 @@ TREES = {
                     "The server accepted your login but crashed or rejected you when loading "
                     "your character.\n\n"
                     "**Try these in order:**\n"
-                    "1. **Try a new character** — if a fresh character works, the old one has "
-                    "corrupted data (imported from a different core or incompatible build)\n"
-                    "2. **Check Server.log** — look for errors or crash dumps around the disconnect time\n"
-                    "3. **Check if WoW is still downloading** — if Battle.net says \"Playable\" but "
-                    "isn't 100% downloaded, some zones will crash. Wait for the full download\n"
-                    "4. **Verify extractors** — missing vmaps/mmaps for the character's zone will crash\n"
-                    "5. If it happens with ALL characters, it's a server-side data issue — "
-                    "post your Server.log in #troubleshooting"
+                    "1. **Try a new character** \u2014 if a fresh character works, the old one has "
+                    "corrupted data\n"
+                    "2. **Check Server.log** \u2014 look for errors around the disconnect time\n"
+                    "3. **Check if WoW is still downloading** \u2014 some zones crash if not 100% downloaded\n"
+                    "4. **Verify extractors** \u2014 missing vmaps/mmaps for the character's zone will crash\n"
+                    "5. If it happens with ALL characters, post your Server.log in #troubleshooting"
                 ),
             },
         ],
@@ -83,17 +84,11 @@ TREES = {
                 "answer": (
                     "**Local Connection Troubleshooting:**\n\n"
                     "1. **Both servers must be running**: open bnetserver **and** worldserver\n"
-                    "   (two separate console windows — both should show \"ready\" messages)\n"
-                    "2. **Antivirus / Windows Defender**: If a server immediately closes, your AV likely deleted the `.exe`. Add exceptions for your server folder.\n"
-                    "3. **Realmlist check**: In your `auth` database, the `realmlist` table's "
-                    "address should be `127.0.0.1`\n"
-                    "4. **Arctium Launcher**: Make sure it's pointed at `127.0.0.1`\n"
-                    "   *(Note: Arctium requires a CPU that supports AVX2 instructions (Intel mid-2013+). Older CPUs will not launch Arctium!)*\n"
-                    "5. **Ports**: Make sure nothing else is using these:\n"
-                    "   \u2022 `1119` — BNet authentication\n"
-                    "   \u2022 `8085` — Worldserver\n"
-                    "6. **Check bnetserver.conf**: `LoginREST.ExternalAddress` and "
-                    "`LoginREST.LocalAddress` should both be `127.0.0.1`"
+                    "2. **Antivirus / Windows Defender**: If a server immediately closes, your AV likely deleted the `.exe`\n"
+                    "3. **Realmlist check**: `realmlist` table address should be `127.0.0.1`\n"
+                    "4. **Arctium Launcher**: pointed at `127.0.0.1` (requires AVX2 CPU)\n"
+                    "5. **Ports**: `1119` (BNet) and `8085` (World) must be free\n"
+                    "6. **bnetserver.conf**: `LoginREST.ExternalAddress` and `LocalAddress` = `127.0.0.1`"
                 ),
             },
             {
@@ -101,23 +96,16 @@ TREES = {
                 "emoji": "\U0001f310",
                 "answer": (
                     "**Remote Connection Troubleshooting:**\n\n"
-                    "1. The host machine needs **port forwarding** on their router:\n"
-                    "   \u2022 `1119` — BNet authentication\n"
-                    "   \u2022 `8085` — Worldserver\n"
-                    "2. `auth.realmlist` address must be the **host's public IP** (not 127.0.0.1)\n"
-                    "3. `bnetserver.conf` → `LoginREST.ExternalAddress` = host's public IP\n"
-                    "4. Windows Firewall on the host must **allow inbound** on those ports\n"
-                    "5. Arctium Launcher on the client → pointed to host's public IP\n"
-                    "6. For **LAN only** (same network): use the host's LAN IP (e.g. 192.168.x.x) "
-                    "instead of public IP, no port forwarding needed\n\n"
-                    "*Quick test:* From the client machine, open Command Prompt and type "
-                    "`telnet <host-ip> 1119` — if it connects, the port is reachable."
+                    "1. Port forward on router: `1119` and `8085`\n"
+                    "2. `auth.realmlist` address = host's **public IP**\n"
+                    "3. `bnetserver.conf` \u2192 `LoginREST.ExternalAddress` = public IP\n"
+                    "4. Windows Firewall: allow inbound on both ports\n"
+                    "5. For **LAN**: use host's local IP (192.168.x.x), no port forwarding needed\n\n"
+                    "*Test:* `telnet <host-ip> 1119` from client machine"
                 ),
             },
         ],
     },
-
-    # ── In-Game Issues ─────────────────────────────────────────────
     "game_issues": {
         "prompt": "What kind of in-game issue are you experiencing?",
         "options": [
@@ -126,18 +114,12 @@ TREES = {
                 "emoji": "\U0001f9df",
                 "answer": (
                     "**Missing or Broken NPC:**\n\n"
-                    "Private servers don't have 100% of retail content — some NPCs, "
-                    "quests, and events aren't implemented yet.\n\n"
-                    "**What to check:**\n"
-                    "1. **Is it phased?** — Some NPCs only appear in certain phases. "
-                    "Try `.mod phase <id>` or `.tele <zone>` to change your phase/zone\n"
-                    "2. **Respawn timer** — The NPC might be dead. Use `.npc add` (GM only) or wait\n"
-                    "3. **Look it up**: Use `/creature <name>` to get a Wowhead link and verify "
-                    "the NPC exists in the expected location\n\n"
-                    "**If it's genuinely missing**, report it in #bug-reports with:\n"
-                    "\u2022 The NPC name and/or Wowhead link\n"
-                    "\u2022 The zone/coordinates where it should be\n"
-                    "\u2022 What you expected to happen"
+                    "Some NPCs, quests, and events aren't implemented yet.\n\n"
+                    "**Check:**\n"
+                    "1. **Phased?** Try `.mod phase <id>` or relog\n"
+                    "2. **Respawn timer** \u2014 NPC might be dead\n"
+                    "3. **Look it up**: `/creature <name>` for Wowhead link\n\n"
+                    "Report in #bug-reports with NPC name, zone, and expected behavior."
                 ),
             },
             {
@@ -145,17 +127,12 @@ TREES = {
                 "emoji": "\u26a1",
                 "answer": (
                     "**Spell or Ability Not Working:**\n\n"
-                    "Many spells are scripted manually in private servers. Some may be "
-                    "missing handlers or have incorrect values.\n\n"
-                    "**What to try:**\n"
-                    "1. **Relog** — some aura/spell state issues fix themselves on relog\n"
-                    "2. **Check talents** — make sure the talent/spec is properly applied\n"
-                    "3. **Use `.unaura all`** — clears stuck auras that might be interfering\n"
-                    "4. **Look it up**: Use `/spell <name>` to verify on Wowhead what it should do\n\n"
-                    "**Report it** in #bug-reports with:\n"
-                    "\u2022 The spell name and Wowhead link\n"
-                    "\u2022 What happened vs what should happen\n"
-                    "\u2022 Your class/spec"
+                    "**Try:**\n"
+                    "1. **Relog** \u2014 fixes aura state issues\n"
+                    "2. **Check talents** \u2014 ensure spec is properly applied\n"
+                    "3. **`.unaura all`** \u2014 clears stuck auras\n"
+                    "4. **Look it up**: `/spell <name>` for Wowhead reference\n\n"
+                    "Report in #bug-reports with spell name, class/spec, and what happened vs expected."
                 ),
             },
             {
@@ -163,17 +140,12 @@ TREES = {
                 "emoji": "\u2757",
                 "answer": (
                     "**Quest Issues:**\n\n"
-                    "Quests are one of the most complex systems — many retail quests require "
-                    "scripted events, phasing, and cutscenes that may not be implemented.\n\n"
-                    "**What to try:**\n"
-                    "1. **Abandon and re-accept** — sometimes quest state gets corrupted\n"
-                    "2. **Check prerequisites** — some quests require earlier quests completed first\n"
-                    "3. **Phase issues** — the quest objective might be in a different phase. "
-                    "Try logging out and back in\n"
-                    "4. **GM commands** (if available):\n"
-                    "   \u2022 `.quest complete <id>` to force-complete\n"
-                    "   \u2022 `.quest remove <id>` then re-accept\n\n"
-                    "**Report it** in #bug-reports with the quest name and Wowhead link."
+                    "**Try:**\n"
+                    "1. **Abandon and re-accept**\n"
+                    "2. **Check prerequisites**\n"
+                    "3. **Relog** for phase issues\n"
+                    "4. **GM commands**: `.quest complete <id>` or `.quest remove <id>`\n\n"
+                    "Report in #bug-reports with quest name and Wowhead link."
                 ),
             },
             {
@@ -181,22 +153,16 @@ TREES = {
                 "emoji": "\U0001f455",
                 "answer": (
                     "**Transmog / Appearance Issues:**\n\n"
-                    "The transmog/wardrobe system is actively being developed for the "
-                    "12.x client and may have visual glitches or missing features.\n\n"
+                    "The transmog system is actively in development for 12.x.\n\n"
                     "**Known limitations:**\n"
                     "\u2022 Some appearances may not display correctly\n"
                     "\u2022 Outfit saving/loading may have edge cases\n"
-                    "\u2022 Hidden appearances work but may need specific items\n\n"
-                    "**If you find a bug**, report it in #bug-reports with:\n"
-                    "\u2022 What you tried to transmog (item + slot)\n"
-                    "\u2022 What happened vs what should happen\n"
-                    "\u2022 A screenshot if possible"
+                    "\u2022 Hidden appearances need specific items\n\n"
+                    "Report in #bug-reports with item, slot, and screenshot."
                 ),
             },
         ],
     },
-
-    # ── Setup Help ─────────────────────────────────────────────────
     "setup_help": {
         "prompt": "What part of setup do you need help with?",
         "options": [
@@ -210,60 +176,35 @@ TREES = {
                 "emoji": "\U0001f4be",
                 "answer": (
                     "**MySQL / Database Troubleshooting:**\n\n"
-                    "1. **MySQL won't start?**\n"
-                    "   \u2022 Check if another MySQL is running on port 3306 (Task Manager → mysqld.exe)\n"
-                    "   \u2022 If using UniServerZ, launch it as **Administrator**\n"
-                    "   \u2022 Check the MySQL error log in the data folder\n\n"
-                    "2. **\"Access denied\" or connection errors?**\n"
-                    "   \u2022 Default creds for most repacks: `root` / `admin`\n"
-                    "   \u2022 In worldserver.conf, check `LoginDatabaseInfo`, `WorldDatabaseInfo`, etc.\n"
-                    "   \u2022 Format: `\"127.0.0.1;3306;root;admin;world\"`\n\n"
-                    "3. **SQL update errors?**\n"
-                    "   \u2022 Apply SQL files **in date order** — don't skip any\n"
-                    "   \u2022 'Table already exists' = you applied it twice (safe to ignore)\n"
-                    "   \u2022 'Unknown column' = you missed an earlier update\n"
-                    "   \u2022 When in doubt: drop and recreate the database, apply all from scratch"
+                    "1. **Won't start?** Check port 3306 conflict. Launch UniServerZ as Admin.\n"
+                    "2. **Access denied?** Default creds: `root` / `admin`. "
+                    "Check worldserver.conf `LoginDatabaseInfo` format: `\"127.0.0.1;3306;root;admin;world\"`\n"
+                    "3. **SQL errors?** Apply files in date order. 'Table exists' = safe to ignore."
                 ),
             },
             {
                 "label": "Map / data extraction",
                 "emoji": "\U0001f5c2\ufe0f",
                 "answer": (
-                    "**Map Extraction Guide:**\n\n"
-                    "You need to run **4 extractors** from your WoW client directory "
-                    "(where WoW.exe lives), in this exact order:\n\n"
-                    "1. `mapextractor.exe` — base terrain maps\n"
-                    "2. `vmapextractor.exe` — visual/collision maps\n"
-                    "3. `vmap4assembler.exe` — assembles vmaps (run AFTER step 2)\n"
-                    "4. `mmaps_generator.exe` — movement/pathfinding maps (**takes 1-2+ hours**)\n\n"
-                    "**After extraction:**\n"
-                    "\u2022 Copy `maps/`, `vmaps/`, `mmaps/` to your server directory\n"
-                    "\u2022 Set `DataDir` in worldserver.conf to point there\n"
-                    "\u2022 After a WoW client update, **re-extract everything**\n\n"
-                    "**Normal warnings:** `Can't open WDT` / `FILE_NOT_FOUND` during vmap "
-                    "extraction are fine — those are unused test maps."
+                    "**Map Extraction:**\n\n"
+                    "Run 4 extractors from WoW `_retail_` dir, in order:\n"
+                    "1. `mapextractor.exe`\n"
+                    "2. `vmapextractor.exe`\n"
+                    "3. `vmap4assembler.exe`\n"
+                    "4. `mmaps_generator.exe` (takes 1-2+ hours)\n\n"
+                    "Copy `maps/`, `vmaps/`, `mmaps/` to server dir. Set `DataDir` in conf."
                 ),
             },
             {
                 "label": "Building from source (advanced)",
                 "emoji": "\U0001f528",
                 "answer": (
-                    "**Building TrinityCore from Source:**\n\n"
-                    "**Prerequisites:**\n"
-                    "\u2022 Visual Studio 2022+ with C++ desktop workload\n"
-                    "\u2022 CMake 3.25+\n"
-                    "\u2022 OpenSSL 3.x (Win64, full — not Light)\n"
-                    "\u2022 MySQL 8.0+ or MariaDB\n"
-                    "\u2022 Git\n\n"
-                    "**Steps:**\n"
-                    "1. Clone: `git clone https://github.com/TrinityCore/TrinityCore.git`\n"
-                    "2. Configure: `cmake -B build -S . -G \"Visual Studio 17 2022\" -A x64`\n"
-                    "3. Set `OPENSSL_ROOT_DIR` → your OpenSSL path (use `lib/VC/x64/MD/`)\n"
-                    "4. Open `build/TrinityCore.sln` in Visual Studio\n"
-                    "5. Build in **Release** or **RelWithDebInfo** mode\n"
-                    "6. Output binaries are in `build/bin/`\n\n"
-                    "**Common pitfall:** OpenSSL link errors — make sure you're using the "
-                    "**MD** (not MT) libraries from `lib/VC/x64/MD/`."
+                    "**Building from Source:**\n\n"
+                    "Prerequisites: VS 2022+, CMake 3.25+, OpenSSL 3.x (full, not Light), MySQL 8.0+\n\n"
+                    "1. Clone TrinityCore repo\n"
+                    "2. CMake configure (set `OPENSSL_ROOT_DIR`, use `lib/VC/x64/MD/`)\n"
+                    "3. Build in Release or RelWithDebInfo\n"
+                    "4. Set up databases, extract maps, configure, run"
                 ),
             },
         ],
@@ -276,49 +217,33 @@ TREES = {
                 "emoji": "\U0001f4e6",
                 "answer": (
                     "**Repack Setup Checklist:**\n\n"
-                    "1. **Extract the repack** to a folder with no spaces in the path "
-                    "(e.g., `C:\\TrinityCore\\`)\n"
-                    "2. **Start MySQL** — most repacks include UniServerZ or similar. "
-                    "Launch it first and click \"Start MySQL\"\n"
-                    "3. **Import databases** — the repack should include SQL files. "
-                    "Run them against MySQL to create the `auth`, `world`, `characters`, "
-                    "and `hotfixes` databases\n"
-                    "4. **Extract maps** — run the 4 extractors from your WoW directory "
-                    "(see Map Extraction option)\n"
-                    "5. **Configure**: Edit `worldserver.conf` — set `DataDir`, MySQL credentials, ports\n"
-                    "6. **Start servers**: Run `bnetserver.exe` then `worldserver.exe`\n"
-                    "7. **Create account** in bnetserver console: "
-                    "`account create test@test.com mypassword`\n"
-                    "8. **Set GM**: `account set gmlevel test@test.com 3 -1`\n"
-                    "9. **Launch WoW** via Arctium Launcher pointed at `127.0.0.1`\n"
-                    "10. Log in with your bnet email + password"
+                    "1. Extract to path with no spaces (e.g. `C:\\TrinityCore\\`)\n"
+                    "2. Start MySQL (UniServerZ \u2192 Start MySQL)\n"
+                    "3. Import databases (auth, world, characters, hotfixes)\n"
+                    "4. Extract maps (4 extractors from WoW _retail_)\n"
+                    "5. Edit worldserver.conf (DataDir, MySQL creds)\n"
+                    "6. Start bnetserver then worldserver\n"
+                    "7. Create account: `bnetaccount create email password`\n"
+                    "8. Set GM: `account set gmlevel email 3 -1`\n"
+                    "9. Launch via Arctium at 127.0.0.1"
                 ),
             },
             {
                 "label": "Building from source",
                 "emoji": "\U0001f4bb",
                 "answer": (
-                    "**Building from source** is the advanced path. You'll need Visual Studio, "
-                    "CMake, OpenSSL, and MySQL installed.\n\n"
-                    "The best guide is the official TrinityCore wiki:\n"
-                    "https://trinitycore.info/en/install/requirements\n\n"
-                    "**Quick overview:**\n"
-                    "1. Install all prerequisites (VS2022+, CMake, OpenSSL 3.x, MySQL 8.0+)\n"
-                    "2. Clone the repo\n"
-                    "3. Run CMake to generate the solution\n"
-                    "4. Build in Visual Studio\n"
-                    "5. Set up databases (worldserver auto-applies updates on first run)\n"
-                    "6. Extract maps from your WoW client\n"
-                    "7. Configure and run\n\n"
-                    "If you run into issues at any step, come back and use `/troubleshoot` "
-                    "or ask in #troubleshooting!"
+                    "**Building from source** is the advanced path.\n\n"
+                    "Best guide: https://trinitycore.info/en/install/requirements\n\n"
+                    "1. Install prerequisites (VS2022+, CMake, OpenSSL 3.x, MySQL 8.0+)\n"
+                    "2. Clone repo, run CMake, build in VS\n"
+                    "3. Set up databases, extract maps, configure and run\n\n"
+                    "Come back and use `/troubleshoot` if you get stuck!"
                 ),
             },
         ],
     },
 }
 
-# Top-level menu
 ROOT_OPTIONS = [
     ("cant_connect", "I can't connect to the server", "\U0001f50c"),
     ("game_issues", "Something in-game is broken", "\U0001f3ae"),
@@ -327,8 +252,6 @@ ROOT_OPTIONS = [
 
 
 class TreeButton(discord.ui.Button):
-    """A button that either shows an answer or drills into a sub-tree."""
-
     def __init__(self, label: str, emoji: str, tree_key: str | None = None, answer: str | None = None):
         super().__init__(label=label, emoji=emoji, style=discord.ButtonStyle.secondary)
         self.tree_key = tree_key
@@ -357,8 +280,6 @@ class TreeButton(discord.ui.Button):
 
 
 class TreeView(discord.ui.View):
-    """A view with buttons for a tree node's options."""
-
     def __init__(self, node: dict):
         super().__init__(timeout=120)
         for opt in node["options"]:
@@ -368,16 +289,15 @@ class TreeView(discord.ui.View):
                 tree_key=opt.get("next_node"),
                 answer=opt.get("answer"),
             ))
-        
-        # Add a "Back to Start" button that returns to the root menu
+
         back_btn = discord.ui.Button(
             label="Back to Start",
-            emoji="\U0001f519",  # BACK arrow emoji
+            emoji="\U0001f519",
             style=discord.ButtonStyle.secondary,
-            row=3,  # Put it on a lower row so it's separated
-            custom_id="troubleshooter_back_btn"
+            row=3,
+            custom_id="troubleshooter_back_btn",
         )
-        
+
         async def back_callback(interaction: discord.Interaction):
             icon = em("fix", "\U0001f527")
             embed = discord.Embed(
@@ -387,24 +307,12 @@ class TreeView(discord.ui.View):
             )
             embed.set_footer(text="Select an option below to start")
             await interaction.response.edit_message(embed=embed, view=RootView())
-            
+
         back_btn.callback = back_callback
         self.add_item(back_btn)
 
-    async def on_timeout(self):
-        # Disable all buttons when the view times out
-        for child in self.children:
-            child.disabled = True
-        
-        # We need the original message to edit it, but the interaction might not be accessible here cleanly 
-        # without storing the message from the callback. Since context isn't passed explicitly,
-        # Discord handles the UI disabling but we should at least log or handle if we had the message obj.
-        pass
-
 
 class RootView(discord.ui.View):
-    """Top-level view for the troubleshooter."""
-
     def __init__(self):
         super().__init__(timeout=120)
         for key, label, emoji_str in ROOT_OPTIONS:
@@ -413,14 +321,54 @@ class RootView(discord.ui.View):
                 emoji=emoji_str,
                 tree_key=key,
             ))
-            
-    async def on_timeout(self):
-        # Allow UI to timeout gracefully
-        pass
+
+
+class AskAIModal(discord.ui.Modal, title="Describe your problem"):
+    """Modal for freeform AI troubleshooting."""
+
+    problem = discord.ui.TextInput(
+        label="What's going wrong?",
+        style=discord.TextStyle.paragraph,
+        placeholder="Describe your issue in detail — what you tried, what happened, error messages...",
+        max_length=1000,
+    )
+
+    async def on_submit(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
+        router = getattr(interaction.client, "ai_router", None)
+        if not router or not router.enabled:
+            await interaction.followup.send(
+                "AI support is currently offline. Please describe your issue in #troubleshooting and a human will help!",
+                ephemeral=True,
+            )
+            return
+
+        # Create a minimal message-like object for the router
+        result = await router.handle_admin_test(RouteType.TROUBLESHOOT, str(self.problem))
+
+        if result and result.answer_markdown and not result.needs_staff:
+            icon = em("fix", "\U0001f527")
+            embed = discord.Embed(
+                title=f"{icon} AI Troubleshooting",
+                description=result.answer_markdown,
+                color=discord.Color.green(),
+            )
+            if result.follow_up_question:
+                embed.set_footer(text=result.follow_up_question)
+            else:
+                embed.set_footer(text="Still stuck? Ask in #troubleshooting for human help!")
+            await interaction.followup.send(embed=embed, ephemeral=True)
+        else:
+            await interaction.followup.send(
+                "I wasn't able to diagnose that from the description. "
+                "Please ask in #troubleshooting with any error messages or log files!",
+                ephemeral=True,
+            )
 
 
 class Troubleshooter(commands.Cog):
-    """Interactive guided troubleshooter for DraconicWoW issues."""
+    """Interactive guided troubleshooter with optional AI freeform support."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -434,7 +382,26 @@ class Troubleshooter(commands.Cog):
             color=discord.Color.blue(),
         )
         embed.set_footer(text="Select an option below to start")
-        await interaction.response.send_message(embed=embed, view=RootView(), ephemeral=True)
+
+        view = RootView()
+
+        # Add AI freeform button if AI is available
+        router = getattr(self.bot, "ai_router", None)
+        if router and router.enabled:
+            ai_btn = discord.ui.Button(
+                label="Describe my problem (AI)",
+                emoji="\U0001f9e0",
+                style=discord.ButtonStyle.primary,
+                row=2,
+            )
+
+            async def ai_callback(btn_interaction: discord.Interaction):
+                await btn_interaction.response.send_modal(AskAIModal())
+
+            ai_btn.callback = ai_callback
+            view.add_item(ai_btn)
+
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
 async def setup(bot: commands.Bot):

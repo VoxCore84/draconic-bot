@@ -1,100 +1,177 @@
-import discord
+"""Parses uploaded .conf and .log files — local analysis + optional AI summary.
+
+v3: After local pattern matching, can optionally send parsed findings to Gemini
+for a more detailed summary. AI summary is additive — local parsing always runs first.
+"""
+
+import logging
 import re
+
+import discord
 from discord.ext import commands
 from config import SUPPORT_CHANNEL_IDS
 from emojis import em
+from ai.schemas import RouteType
+
+log = logging.getLogger(__name__)
+
 
 class LogParser(commands.Cog):
-    """Parses uploaded .conf and .log files to help noobs automatically."""
+    """Parses uploaded .conf and .log files to help users automatically."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    def _get_router(self):
+        return getattr(self.bot, "ai_router", None)
 
     @commands.Cog.listener("on_message")
     async def on_message(self, message: discord.Message):
         if message.author.bot or not message.attachments:
             return
 
-        # Only trigger in support channels
         if SUPPORT_CHANNEL_IDS and message.channel.id not in SUPPORT_CHANNEL_IDS:
             return
 
         for attachment in message.attachments:
-            if attachment.filename.lower() == "worldserver.conf":
+            fname = attachment.filename.lower()
+            if fname == "worldserver.conf":
                 await self.parse_config(message, attachment)
                 return
-            elif attachment.filename.lower() in ["server.log", "crash.log", "crash.txt", "dberrors.log"]:
+            elif fname in ("server.log", "crash.log", "crash.txt", "dberrors.log"):
                 await self.parse_log(message, attachment)
                 return
 
     async def parse_config(self, message: discord.Message, attachment: discord.Attachment):
-        """Validates simple worldserver.conf beginner mistakes."""
+        """Validates worldserver.conf for common beginner mistakes."""
         file_bytes = await attachment.read()
         try:
-            content = file_bytes.decode('utf-8')
+            content = file_bytes.decode("utf-8")
         except UnicodeDecodeError:
             return
 
         errors = []
-        
-        # Check DataDir
-        if 'DataDir = "."' not in content and "DataDir = '.'" not in content:
-            datadir_match = re.search(r'^DataDir\s*=\s*([^\n]+)', content, re.MULTILINE)
-            if datadir_match:
-                errors.append(f"**Maps Folder (`DataDir`)**: Yours is set to `{datadir_match.group(1)}`. Unless you know exactly what you are doing, you should erase that and make it exactly `DataDir = \".\"`.")
 
-        # Check Login/World Database passwords
-        if '127.0.0.1;3306;trinity;trinity' in content:
-            errors.append("**Database Password**: You are using the default TrinityCore password. If you are using UniServerZ for a repack, the password should be `127.0.0.1;3306;root;admin;auth` (and `world` / `characters`).")
+        if 'DataDir = "."' not in content and "DataDir = '.'" not in content:
+            datadir_match = re.search(r"^DataDir\s*=\s*([^\n]+)", content, re.MULTILINE)
+            if datadir_match:
+                errors.append(
+                    f"**Maps Folder (`DataDir`)**: Yours is set to `{datadir_match.group(1)}`. "
+                    'Unless you know exactly what you are doing, set it to `DataDir = "."`.'
+                )
+
+        if "127.0.0.1;3306;trinity;trinity" in content:
+            errors.append(
+                "**Database Password**: Using default TrinityCore password. "
+                "If using UniServerZ, change to `127.0.0.1;3306;root;admin;auth` (and world/characters)."
+            )
 
         if errors:
             icon = em("page", "\U0001f4c4")
+            desc = (
+                f"Hey {message.author.mention}, I checked your config and found some issues:\n\n"
+                + "\n\n".join(errors)
+            )
+
+            # Optional AI summary for richer advice
+            router = self._get_router()
+            if router and router.enabled:
+                ai_context = f"Config file analysis found these issues:\n" + "\n".join(errors)
+                ai_context += f"\n\nFull config excerpt (first 2000 chars):\n{content[:2000]}"
+                result = await router.handle_admin_test(RouteType.LOG_SUMMARY, ai_context)
+                if result and result.answer_markdown and result.confidence >= 0.70:
+                    desc += f"\n\n**AI Analysis:**\n{result.answer_markdown}"
+
             embed = discord.Embed(
-                title=f"{icon} I checked your config file!",
-                description=f"Hey {message.author.mention}, I read your `worldserver.conf` file and noticed some common setup mistakes:\n\n" + "\n\n".join(errors),
-                color=discord.Color.yellow()
+                title=f"{icon} Config File Review",
+                description=desc[:4000],
+                color=discord.Color.yellow(),
             )
             await message.reply(embed=embed)
         else:
-            await message.add_reaction("\U00002705") # Green checkmark
-
+            await message.add_reaction("\u2705")
 
     async def parse_log(self, message: discord.Message, attachment: discord.Attachment):
-        """Validates Server.log crashes and assertions."""
+        """Analyzes Server.log / crash logs for known error patterns."""
         file_bytes = await attachment.read()
         try:
-            content = file_bytes.decode('utf-8')
+            content = file_bytes.decode("utf-8")
         except UnicodeDecodeError:
             return
 
-        error_msg = None
-        
-        # Crash 1: Database totally unavailable
-        if "Could not connect to MySQL" in content or "DatabasePool" in content and "NOT opened" in content:
-            error_msg = "**Database Connection Failed!**\nThe server can't talk to MySQL. If you are using UniServerZ, make sure you clicked 'Start MySQL' and that the icon is green, not red. (If it's red, another program on your computer is using port 3306!)."
-            
-        # Crash 2: Missing maps
-        elif "Assertion failed: (result), function InitMap" in content or "GridMap::load" in content or "Map file" in content and "does not exist" in content:
-            error_msg = "**Missing Map Files!**\nThe server is trying to load the world, but your map files aren't there! You need to go into your `_retail_` WoW folder and run the `mapextractor.exe` and `vmap` tools, then copy the result folders to your server."
-            
-        # Crash 3: Bad Auth/Bnet seed
-        elif "Missing auth seed" in content or "Client build" in content:
-            error_msg = "**Client/Server Version Mismatch!**\nBlizzard updated the Retail WoW game, but your server is still on the old version. Type `/buildcheck` to find the update file, run it in your database, and restart your server."
+        findings = []
 
-        # Crash 4: Port in use
-        elif "bind failed" in content or "Address already in use" in content:
-            error_msg = "**Port Already In Use!**\nYou either have *two* worldservers open at the same time, or another app on your PC is using port 8085."
+        # Pattern matching for known crashes
+        if "Could not connect to MySQL" in content or ("DatabasePool" in content and "NOT opened" in content):
+            findings.append(
+                "**Database Connection Failed!** "
+                "MySQL isn't running or the server can't connect. "
+                "Start MySQL (UniServerZ green button) and check port 3306."
+            )
 
-        if error_msg:
+        if "Assertion failed" in content and ("InitMap" in content or "GridMap" in content):
+            findings.append(
+                "**Missing Map Files!** "
+                "Run the 4 extractors in your WoW _retail_ folder and copy maps/vmaps/mmaps to server dir."
+            )
+        elif "Map file" in content and "does not exist" in content:
+            findings.append(
+                "**Missing Map Files!** "
+                "Map data is missing. Extract maps from your WoW client."
+            )
+
+        if "Missing auth seed" in content or "Client build" in content:
+            findings.append(
+                "**Build Mismatch!** "
+                "Your WoW client updated. Apply the latest auth SQL update and restart."
+            )
+
+        if "bind failed" in content or "Address already in use" in content:
+            findings.append(
+                "**Port In Use!** "
+                "Another server or program is using the port. Close duplicate instances."
+            )
+
+        if findings:
             icon = em("mag", "\U0001f50d")
+            desc = f"Hey {message.author.mention}, I found these issues in your log:\n\n"
+            desc += "\n\n".join(f"\u2022 {f}" for f in findings)
+
+            # Optional AI summary
+            router = self._get_router()
+            if router and router.enabled:
+                # Send parsed findings + raw excerpt for AI to summarize
+                ai_context = "Log analysis found:\n" + "\n".join(findings)
+                # Include some raw log context (last 2000 chars or around error lines)
+                ai_context += f"\n\nRaw log excerpt (last 2000 chars):\n{content[-2000:]}"
+                result = await router.handle_admin_test(RouteType.LOG_SUMMARY, ai_context)
+                if result and result.answer_markdown and result.confidence >= 0.70:
+                    desc += f"\n\n**AI Summary:**\n{result.answer_markdown}"
+
             embed = discord.Embed(
-                title=f"{icon} Log File Analysis",
-                description=f"Hey {message.author.mention}, I read your crash log and found the exact problem:\n\n{error_msg}",
-                color=discord.Color.red()
+                title=f"{icon} Log Analysis",
+                description=desc[:4000],
+                color=discord.Color.red(),
             )
             await message.reply(embed=embed)
         else:
-            await message.add_reaction("\U0001f440") # Eyes emoji: "I looked but didn't find anything obvious"
+            # No known patterns — if AI is enabled, try a general summary
+            router = self._get_router()
+            if router and router.enabled and len(content) > 100:
+                ai_context = f"User uploaded a log file ({attachment.filename}). No known error patterns matched. Raw content (last 3000 chars):\n{content[-3000:]}"
+                result = await router.handle_admin_test(RouteType.LOG_SUMMARY, ai_context)
+                if result and result.answer_markdown and result.confidence >= 0.70:
+                    icon = em("mag", "\U0001f50d")
+                    embed = discord.Embed(
+                        title=f"{icon} AI Log Analysis",
+                        description=f"Hey {message.author.mention}, I didn't find any obvious known issues, but here's what the AI noticed:\n\n{result.answer_markdown}",
+                        color=discord.Color.orange(),
+                    )
+                    await message.reply(embed=embed)
+                    return
+
+            await message.add_reaction("\U0001f440")  # Eyes: looked but nothing obvious
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(LogParser(bot))

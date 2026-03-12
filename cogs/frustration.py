@@ -1,4 +1,7 @@
-"""Detects frustrated users and offers guided DM help.
+"""Detects frustrated users and offers AI-powered empathetic help.
+
+v3: Uses Gemini to generate contextual empathetic responses when AI is enabled.
+Falls back to random static openers when AI is disabled.
 
 Smart gating:
   - Per-user cooldown (won't re-trigger for same user within 30 minutes)
@@ -15,6 +18,7 @@ import discord
 from discord.ext import commands
 from config import SUPPORT_CHANNEL_IDS
 from emojis import em
+from ai.schemas import RouteType
 
 FRUSTRATION_PATTERN = re.compile(
     r"(i.?m so|i.?m really|very|super)?\s*(confused|frustrated|lost|giving up|give up|about to quit)|"
@@ -25,10 +29,10 @@ FRUSTRATION_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-_USER_COOLDOWN = 1800   # 30 minutes per user
-_CHANNEL_COOLDOWN = 300  # 5 minutes per channel
+_USER_COOLDOWN = 1800
+_CHANNEL_COOLDOWN = 300
 
-# Varied empathetic openers so the bot doesn't feel robotic
+# Static fallback openers
 _EMPATHY_OPENERS = [
     "Setting up a private server for the first time is definitely tricky, and it's totally normal to feel stuck. There are a lot of moving parts.",
     "Private server setup has a LOT of steps, and it's really common to hit a wall. You're not alone in this.",
@@ -46,19 +50,20 @@ _OFFER_TEXT = (
 
 
 class Frustration(commands.Cog):
-    """Detects when a user is frustrated and offers guided DM help."""
+    """Detects when a user is frustrated and offers guided help."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self._user_cooldowns: dict[int, float] = {}
         self._channel_cooldowns: dict[int, float] = {}
 
+    def _get_router(self):
+        return getattr(self.bot, "ai_router", None)
+
     def _check_cooldowns(self, user_id: int, channel_id: int, now: float) -> bool:
-        # Per-user cooldown
         last_user = self._user_cooldowns.get(user_id, 0)
         if now - last_user < _USER_COOLDOWN:
             return False
-        # Per-channel cooldown
         last_channel = self._channel_cooldowns.get(channel_id, 0)
         if now - last_channel < _CHANNEL_COOLDOWN:
             return False
@@ -71,17 +76,14 @@ class Frustration(commands.Cog):
         if message.author.bot or not message.guild:
             return
 
-        # Only trigger in support channels
         if SUPPORT_CHANNEL_IDS and message.channel.id not in SUPPORT_CHANNEL_IDS:
             return
 
-        # Don't interrupt threads or replies
         if isinstance(message.channel, discord.Thread):
             return
         if message.reference is not None:
             return
 
-        # Need enough text to be meaningful
         if len(message.content.split()) < 6:
             return
 
@@ -92,6 +94,27 @@ class Frustration(commands.Cog):
         if not self._check_cooldowns(message.author.id, message.channel.id, now):
             return
 
+        # Try AI-powered empathetic response
+        router = self._get_router()
+        if router and router.enabled:
+            result = await router.handle_message(
+                message, force_route=RouteType.FRUSTRATION
+            )
+            if result and result.answer_markdown and not result.needs_staff:
+                icon = em("lifesaver", "\U0001f6df")
+                embed = discord.Embed(
+                    title=f"{icon} Need a hand?",
+                    description=f"Hi {message.author.mention}, {result.answer_markdown}",
+                    color=discord.Color.brand_green(),
+                )
+                if result.follow_up_question:
+                    embed.set_footer(text=result.follow_up_question)
+                else:
+                    embed.set_footer(text="Click the button below to start a private troubleshooting session.")
+                await self._send_with_dm_button(message, embed)
+                return
+
+        # Static fallback
         empathy = random.choice(_EMPATHY_OPENERS)
         icon = em("lifesaver", "\U0001f6df")
         embed = discord.Embed(
@@ -99,10 +122,10 @@ class Frustration(commands.Cog):
             description=f"Hi {message.author.mention}, {empathy.lower()}\n\n{_OFFER_TEXT}",
             color=discord.Color.brand_green(),
         )
-        embed.set_footer(
-            text="Click the button below to start a private troubleshooting session."
-        )
+        embed.set_footer(text="Click the button below to start a private troubleshooting session.")
+        await self._send_with_dm_button(message, embed)
 
+    async def _send_with_dm_button(self, message: discord.Message, embed: discord.Embed):
         view = discord.ui.View(timeout=120)
 
         async def launch_dm_guide(interaction: discord.Interaction):
@@ -113,7 +136,6 @@ class Frustration(commands.Cog):
             try:
                 dm_channel = await interaction.user.create_dm()
                 from cogs.dm_guide import DMStepView, SETUP_STEPS
-
                 step_data = SETUP_STEPS[0]
                 icon_dm = em("robot", "\U0001f916")
                 dm_embed = discord.Embed(

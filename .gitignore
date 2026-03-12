@@ -5,6 +5,7 @@ logs/
 data/faq_stats.json
 data/.last_known_build
 data/.last_known_commit
+data/ai_metrics.db
 *.egg-info/
 dist/
 build/
